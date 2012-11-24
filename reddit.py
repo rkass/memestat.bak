@@ -1,4 +1,4 @@
-import urllib3
+ximport urllib3
 import json
 
 adviceAnimals = urllib3.PoolManager().request('GET',
