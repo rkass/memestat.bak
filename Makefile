@@ -36,10 +36,10 @@ CMAKE_COMMAND = /usr/bin/cmake
 RM = /usr/bin/cmake -E remove -f
 
 # The top-level source directory on which CMake was run.
-CMAKE_SOURCE_DIR = /home/ryan/OpenCV-2.4.2/memestat
+CMAKE_SOURCE_DIR = /home/ryan/OpenCV-2.4.2/code
 
 # The top-level build directory on which CMake was run.
-CMAKE_BINARY_DIR = /home/ryan/OpenCV-2.4.2/memestat
+CMAKE_BINARY_DIR = /home/ryan/OpenCV-2.4.2/code
 
 #=============================================================================
 # Targets provided globally by CMake.
