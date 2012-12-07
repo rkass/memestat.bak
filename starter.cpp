@@ -94,6 +94,14 @@ vector<float> assign(Mat img, int buckets){
   return ret;
 }
      
+Mat focus(Mat unfocusedImage){ 
+     int y_offset= ((unfocusedImage.rows/2)-10); 
+     int x_offset ((unfocusedImage.cols/2)-10);
+     Mat focusedImage = unfocusedImage(Rect(x_offset, 30, 20,20));
+     return focusedImage;
+}
+
+
 void verifyRead(Mat img, string s){
   if(!img.data){ 
     puts("Couldn't read image: ");
@@ -106,11 +114,11 @@ void verifyRead(Mat img, string s){
 int pixelBuckets(vector<string> library, string target, int buckets){
   vector<Mat> lib(library.size());
   for(int i = 0; i < lib.size(); i++){
-    lib[i] = imread(library[i], 1);
+    lib[i] = focus(imread(library[i], 1));
     verifyRead(lib[i], library[i]);
     
   }
-  Mat targ = imread(target, 1);
+  Mat targ = focus(imread(target, 1));
   verifyRead(targ, target);
   vector <vector<float> > libAssignments(lib.size());
   for(int i = 0; i < libAssignments.size(); i++){
