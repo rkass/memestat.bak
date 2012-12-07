@@ -21,9 +21,9 @@ float avgDistance(vector <DMatch> dmatches, int n){
             best[x] = tmp;
           }   
           break;
-        }   
-      }   
-    }   
+        }
+      }
+    }
   }
   float total = 0;
   for (int i = 0; i < n; i++){
@@ -33,14 +33,18 @@ float avgDistance(vector <DMatch> dmatches, int n){
 }
 
 vector<string> getDir(){
-  vector<string> ret(100);
+  vector<string> ret;
   DIR *dir;
   struct dirent *ent;
-  dir = opendir ("/home/ryan/Dropbox/library");
-  int i = 0;
+  string dirName = "/home/ryan/Dropbox/library";
+  dir = opendir (dirName.c_str());
   while ((ent = readdir (dir)) != NULL){
-    ret[i] = ent -> d_name;
-    i++;
+    string file = ent -> d_name;
+    //does it contain a leading "." ?
+    if (file.compare(0, 1, ".")){
+      string fullPath = dirName + "/" + file;
+      ret.push_back(fullPath); 
+    }
   }
   closedir(dir);
   return ret;
@@ -55,44 +59,31 @@ float getDiff(vector<float> x, vector<float> y){
   return ret;
 }
   
+float round(float r) {
+    return (r > 0.0) ? floor(r + 0.5) : ceil(r - 0.5);
+}
 
-vector<float> assign(Mat img){
-  vector<float> ret(15);
-  for(int x = 0; x < 15; x++){
-    ret[x] = 0;
-  }
+
+vector<float> assign(Mat img, int buckets){
+  vector<float> ret(buckets*3);
   for(int i = 0; i < img.rows; i++){
     for(int j = 0; j < img.cols; j++){
-      if(img.at<cv::Vec3b>(i,j)[0] < 51)
-        ret[0] += 1;
-      else if(img.at<cv::Vec3b>(i,j)[0] < 102)
-        ret[1] += 1;
-      else if(img.at<cv::Vec3b>(i,j)[0] < 153)
-        ret[2] += 1;
-      else if(img.at<cv::Vec3b>(i,j)[0] < 204)
-        ret[3] += 1;
-      else
-        ret[4] += 1;
-      if(img.at<cv::Vec3b>(i,j)[1] < 51)
-        ret[5] += 1;
-      else if(img.at<cv::Vec3b>(i,j)[1] < 102)
-        ret[6] += 1;
-      else if(img.at<cv::Vec3b>(i,j)[1] < 153)
-        ret[7] += 1;
-      else if(img.at<cv::Vec3b>(i,j)[1] < 204)
-        ret[8] += 1;
-      else
-        ret[9] += 1;
-      if(img.at<cv::Vec3b>(i,j)[2] < 51)
-        ret[10] += 1;
-      else if(img.at<cv::Vec3b>(i,j)[2] < 102)
-        ret[11] += 1;
-      else if(img.at<cv::Vec3b>(i,j)[2] < 153)
-        ret[12] += 1;
-      else if(img.at<cv::Vec3b>(i,j)[2] < 204)
-        ret[13] += 1;
-      else
-        ret[14] += 1;
+      float fbuckets = buckets;
+      float initRed = img.at<cv::Vec3b>(i,j)[0];
+      float initGreen = img.at<cv::Vec3b>(i,j)[1];
+      float initBlue = img.at<cv::Vec3b>(i,j)[2];
+      float red = floor(initRed/255.0 * fbuckets);
+      float green = floor(initGreen/255.0 * fbuckets) + 10;
+      float blue = floor(initBlue/255.0 * fbuckets) + 20;
+      int finalRed = min(fbuckets - 1, red);
+      int finalGreen = min(fbuckets*2 - 1, green);
+      int finalBlue = min(fbuckets*3 - 1, blue);
+     // printf("Red %d", finalRed);
+     // printf("Green %d", finalGreen);
+     // printf("Blue %d", finalBlue);
+      ret[finalRed] += 1;
+      ret[finalGreen] += 1;
+      ret[finalBlue] += 1;
     }
   }
   float size;
@@ -101,28 +92,53 @@ vector<float> assign(Mat img){
     ret[i] = ret[i] / size;
   }
   return ret;
-
 }
-            
-int pixelBuckets(vector<string> library, string target){
+     
+void verifyRead(Mat img, string s){
+  if(!img.data){ 
+    puts("Couldn't read image: ");
+    puts(s.c_str());
+    throw new String("Could not read image");
+  }
+}    
+    
+ 
+int pixelBuckets(vector<string> library, string target, int buckets){
   vector<Mat> lib(library.size());
-  for(int i = 0; i < lib.size(); i++)
+  for(int i = 0; i < lib.size(); i++){
     lib[i] = imread(library[i], 1);
+    verifyRead(lib[i], library[i]);
+    
+  }
   Mat targ = imread(target, 1);
+  verifyRead(targ, target);
   vector <vector<float> > libAssignments(lib.size());
-  for(int i = 0; i < libAssignments.size(); i++)
-    libAssignments[i] = assign(lib[i]);
-  vector <float> targAssignment = assign(targ);
+  for(int i = 0; i < libAssignments.size(); i++){
+    libAssignments[i] = assign(lib[i], buckets);
+  }
+  vector <float> targAssignment = assign(targ, buckets);
+  float secondBest = 100;
   float bestMatch = 100;
   int minIndex = 0;
+  int secondMin = 0;
   for(int i = 0; i < libAssignments.size(); i++){
     float diff = getDiff(targAssignment, libAssignments[i]);
-    printf("%s Match: %f: \n", library[i].c_str(), diff);
     if (diff < bestMatch){
+      secondBest = bestMatch;
       bestMatch = diff;
+      secondMin = minIndex;
       minIndex = i;
     }
+    else if(diff < secondBest){
+      secondBest = diff;
+      secondMin = i;
+    }
+  //  if (library[i].compare(, target.size(), target))
+    //  printf("Target Assignment: %s\nScore: %f\n", library[i].c_str(), diff);
+      
+
   }
+  printf("Second Best Match: %s\nScore: %f\n", library[secondMin].c_str(), secondBest);
   printf("Best Match: %s\nScore: %f\n", library[minIndex].c_str(), bestMatch);
   return 1;
 }
@@ -131,20 +147,20 @@ int pixelBuckets(vector<string> library, string target){
 
 int main (int argc, char** argv){
   vector<string> lib = getDir();
-  int size = 0;
-  for(int i = 0; i < lib.size(); i++){
-    if (lib[i].find(".jpg") != string::npos)
-      size++;
-  }
-  vector<string> library(size);
-  int x = 0;
-  for(int i = 0; i < lib.size(); i++){
+//  int size = 0;
+ // for(int i = 0; i < lib.size(); i++){
+   // if (lib[i].find(".jpg") != string::npos)
+     // size++;
+ // }
+//  vector<string> library(size);
+ // int x = 0;
+ /* for(int i = 0; i < lib.size(); i++){
     if (lib[i].find(".jpg") != string::npos){
        library[x] = "/home/ryan/Dropbox/library/" + lib[i];
        x++;
     }
-  }
-  return pixelBuckets(library, argv[1]);/*
+  }*/
+  return pixelBuckets(lib, argv[1], 10);/*
 
   Mat i1, i2, target, freakOut1, freakOut2, targetFreakOut, kpsImg, matchImg1, matchImg2;
   i1 = imread (argv[1], 1);
