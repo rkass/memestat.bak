@@ -32,6 +32,13 @@ float avgDistance(vector <DMatch> dmatches, int n){
   return total/n;
 }
 
+float avgDistance(vector <DMatch> dmatches){
+  float dist = 0;
+  for (vector <DMatch>::size_type i = 0; i < dmatches.size(); i++)
+    dist += dmatches[i].distance;
+  return (dist/dmatches.size());
+}
+
 vector<string> getDir(){
   vector<string> ret;
   DIR *dir;
@@ -50,6 +57,25 @@ vector<string> getDir(){
   return ret;
 }
 
+Mat indexToLib(int i){
+  DIR *dir;
+  struct dirent *ent;
+  string dirName = "/home/ryan/Dropbox/library";
+  dir = opendir (dirName.c_str());
+  int x = 0;
+  while ((ent = readdir (dir)) != NULL){
+    string file = ent -> d_name;
+    //does it contain a leading "." ?
+    if (file.compare(0, 1, ".")){
+      if (x == i){
+        return imread(dirName + "/" + file, 1); 
+      }
+      x++; 
+    }
+  }
+  return imread(dirName + "/" + "x", 1);
+}
+
 float getDiff(vector<float> x, vector<float> y){
   float ret = 0;
   for(int i = 0; i < x.size(); i++){
@@ -61,6 +87,36 @@ float getDiff(vector<float> x, vector<float> y){
   
 float round(float r) {
     return (r > 0.0) ? floor(r + 0.5) : ceil(r - 0.5);
+}
+
+vector<float> assign(Mat img, int buckets, vector<KeyPoint> kp){
+  vector<float> ret(buckets*3);
+  int i = 0;  
+  printf("kp size : %lu", kp.size());
+  while(i < kp.size()){
+    int x = kp[i].pt.x;
+    int y = kp[i].pt.y;
+    float fbuckets = buckets;
+    float initRed = img.at<cv::Vec3b>(x,y)[0];
+    float initGreen = img.at<cv::Vec3b>(x,y)[1];
+    float initBlue = img.at<cv::Vec3b>(x,y)[2];
+    float red = floor(initRed/255.0 * fbuckets);
+    float green = floor(initGreen/255.0 * fbuckets) + 10;
+    float blue = floor(initBlue/255.0 * fbuckets) + 20;
+    int finalRed = min(fbuckets - 1, red);
+    int finalGreen = min(fbuckets*2 - 1, green);
+    int finalBlue = min(fbuckets*3 - 1, blue); 
+    ret[finalRed] += 1;
+    ret[finalGreen] += 1;
+    ret[finalBlue] += 1; 
+    i++;
+  }
+  float size;
+  for(int i = 0; i < ret.size(); i++){
+    size = img.rows * img.cols;
+    ret[i] = ret[i] / size;
+  }
+  return ret;
 }
 
 
@@ -95,9 +151,9 @@ vector<float> assign(Mat img, int buckets){
 }
      
 Mat focus(Mat unfocusedImage){ 
-     int y_offset= ((unfocusedImage.rows/2)-10); 
-     int x_offset ((unfocusedImage.cols/2)-10);
-     Mat focusedImage = unfocusedImage(Rect(x_offset, 30, 20,20));
+     int y_offset= ((unfocusedImage.rows/2)- (unfocusedImage.rows/4)); 
+     int x_offset = 0;
+     Mat focusedImage = unfocusedImage(Rect(x_offset, y_offset, unfocusedImage.cols, unfocusedImage.rows/2));
      return focusedImage;
 }
 
@@ -110,26 +166,44 @@ void verifyRead(Mat img, string s){
   }
 }    
     
+vector<Mat> stringToMats(vector<string> library){
+  vector<Mat> ret(library.size());
+
+  for(int i = 0; i < ret.size(); i++){
+    ret[i] = imread(library[i], 1);
+    verifyRead(ret[i], library[i]);
+  }
+  return ret;
+}
+
+Mat stringToMat(string target){
+  Mat ret = imread(target, 1);
+  verifyRead(ret, target);
+  return ret;
+}
  
-int pixelBuckets(vector<string> library, string target, int buckets){
-  vector<Mat> lib(library.size());
-  for(int i = 0; i < lib.size(); i++){
-    lib[i] = focus(imread(library[i], 1));
-    verifyRead(lib[i], library[i]);
-    
-  }
-  Mat targ = focus(imread(target, 1));
-  verifyRead(targ, target);
+int pixelBuckets(int argc, char** argv, int buckets){
+  vector<string> library = getDir();
+  vector<Mat> lib = stringToMats(library);
+  Mat targ = stringToMat(argv[1]);
   vector <vector<float> > libAssignments(lib.size());
-  for(int i = 0; i < libAssignments.size(); i++){
-    libAssignments[i] = assign(lib[i], buckets);
-  }
-  vector <float> targAssignment = assign(targ, buckets);
+  Ptr <FeatureDetector> fast;
+  fast = FeatureDetector::create("FAST");
+  vector <vector <KeyPoint> > libraryKps;
+  fast -> detect(lib, libraryKps);
+  vector <KeyPoint> targkps;
+  fast -> detect(targ, targkps);
+  for(int i = 0; i < libAssignments.size(); i++)
+    libAssignments[i] = assign(lib[i], buckets, targkps);
+  vector <float> targAssignment = assign(targ, buckets, targkps);
   float secondBest = 100;
   float bestMatch = 100;
   int minIndex = 0;
   int secondMin = 0;
   for(int i = 0; i < libAssignments.size(); i++){
+    if(targAssignment.size() != libAssignments[i].size())
+      printf("Shits fucked");
+
     float diff = getDiff(targAssignment, libAssignments[i]);
     if (diff < bestMatch){
       secondBest = bestMatch;
@@ -141,87 +215,87 @@ int pixelBuckets(vector<string> library, string target, int buckets){
       secondBest = diff;
       secondMin = i;
     }
-  //  if (library[i].compare(, target.size(), target))
-    //  printf("Target Assignment: %s\nScore: %f\n", library[i].c_str(), diff);
-      
-
   }
   printf("Second Best Match: %s\nScore: %f\n", library[secondMin].c_str(), secondBest);
   printf("Best Match: %s\nScore: %f\n", library[minIndex].c_str(), bestMatch);
   return 1;
 }
   
+int descriptorMatch(int argc, char** argv){
+  //get images
+  vector<Mat> libraryImages = stringToMats(getDir());
+  Mat targetImage = stringToMat(argv[1]);
+  
+  //keypoint initialization
+  vector <vector <KeyPoint> > libraryKps;
+  vector <KeyPoint> targetKps;
+  
+  //descriptors initialization  
+  vector <Mat> libraryDescriptors;
+  Mat targetDescriptors;
+  
+  //descriptor matches initializtion
+  vector <vector <DMatch> > matches;
+   
+  //initialize computation pointers
+  Ptr <FeatureDetector> featureDetector;
+  Ptr <DescriptorExtractor> descriptorExtractor;
+  Ptr <DescriptorMatcher> descriptorMatcher;
+  featureDetector = FeatureDetector::create("FAST");
+  descriptorExtractor = DescriptorExtractor::create("FREAK");
+  descriptorMatcher = DescriptorMatcher::create("BruteForce");
+  
+  //Detect keypoints
+  featureDetector -> detect(libraryImages, libraryKps);
+  featureDetector -> detect(targetImage, targetKps);
+  
+  //Compute Descriptors for library, then target
+  descriptorExtractor -> compute(libraryImages, libraryKps, libraryDescriptors);
+  descriptorExtractor -> compute(targetImage, targetKps, targetDescriptors);
+  descriptorMatcher -> add(libraryDescriptors);
+  vector <DMatch> matches2;
+  descriptorMatcher -> match(targetDescriptors, matches2);
+  vector<int> bestMatch(matches2.size());
+  for (vector <DMatch>::size_type i = 0; i < matches2.size(); i++){
+    //printf("Query Index: %d\n", matches2[i].queryIdx);
+    //printf("Train Index: %d\n", matches2[i].trainIdx);
+    //printf("Image Index: %d\n", matches2[i].imgIdx);
+    bestMatch[matches2[i].imgIdx] += 1;
+  }
+  int max = 0;
+  int maxIndex = 0;
+  for (int i = 0; i < bestMatch.size(); i++){
+    if (bestMatch[i] > max){
+      max = bestMatch[i];
+      maxIndex = i;
+    }
+  }
+  //match keypoints on target image to each library image and draw
+  /*for (int i = 0; i < libraryDescriptors.size(); i++){
+    puts("here");
+    descriptorMatcher -> match(targetDescriptors, libraryDescriptors[i], matches[i]);
+    puts("herend");
+    printf("%d: %f \n", i, avgDistance(matches[i]));
+  }*/
+  //descriptorMatcher -> match(targetDescriptors, matches, libraryDescriptors);
+ printf("Max Matches: %d", max);
+  namedWindow( "Display window", CV_WINDOW_AUTOSIZE );// Create a window for display.
+  imshow( "Display window", indexToLib(maxIndex));                   // Show our image inside it.
 
+    waitKey(0);           
+  return 0;
+}
+
+/*options: 
+  pixelBuckets (takes additional argument buckets)
+    Looks at each pixel's RGB values and classify each into one of n buckets.
+    Compare differences in size of each image's total buckets.
+  descriptorMatch
+    Tries to find the image with the minimum distance between descriptors.
+*/
 
 int main (int argc, char** argv){
-  vector<string> lib = getDir();
-//  int size = 0;
- // for(int i = 0; i < lib.size(); i++){
-   // if (lib[i].find(".jpg") != string::npos)
-     // size++;
- // }
-//  vector<string> library(size);
- // int x = 0;
- /* for(int i = 0; i < lib.size(); i++){
-    if (lib[i].find(".jpg") != string::npos){
-       library[x] = "/home/ryan/Dropbox/library/" + lib[i];
-       x++;
-    }
-  }*/
-  return pixelBuckets(lib, argv[1], 10);/*
-
-  Mat i1, i2, target, freakOut1, freakOut2, targetFreakOut, kpsImg, matchImg1, matchImg2;
-  i1 = imread (argv[1], 1);
-  i2 = imread (argv[2], 1);
-  target = imread (argv[3], 1);
-  if (!i1.data){
-      printf ("No image data \n");
-      return -1;
-  }
-  vector <vector <KeyPoint> > libraryKps;
-  vector <Mat> freakOuts;
-  Mat ff[2] = {freakOut1, freakOut2};
-  freakOuts.assign(&ff[0], &ff[0]+2);
-  Mat vv[2] = {i1, i2};
-  vector <Mat> library;
-  library.assign(&vv[0], &vv[0]+2);
-  Ptr <FeatureDetector> fast;
-  Ptr <DescriptorExtractor> freakdes;
-  Ptr <DescriptorMatcher> bfMatcher;
-  fast = FeatureDetector::create("FAST");
-  
-  //Detect keypoints for library images
-  fast -> detect(library, libraryKps);
-  freakdes = DescriptorExtractor::create("FAST");
-  //Compute Descriptors for each library image
-  for (vector <vector <KeyPoint> >::size_type i = 0; i < libraryKps.size(); i++){
-    freakdes -> compute(library[i], libraryKps[i], freakOuts[i]);
-  }
-  //Detect keypoints for target image
-  vector <KeyPoint> targetKps;
-  fast -> detect(target, targetKps);
-  //Compute Descriptors for target image
-  freakdes -> compute(target, targetKps, targetFreakOut);
-  vector <DMatch> m1;
-  vector <DMatch> m2;
-  vector <vector <DMatch> > matches;
-  vector <DMatch> dd[2] = {m1, m2};
-  matches.assign(&dd[0], &dd[0]+2);
-  bfMatcher = DescriptorMatcher::create("BruteForce");
-  //match keypoints on target image to each library image and draw
-  for (vector <vector <DMatch> >::size_type i = 0; i < matches.size(); i++){
-    bfMatcher -> match(targetFreakOut, freakOuts[i], matches[i]);
-    Mat tmp;
-    drawMatches(target, targetKps, library[i], libraryKps[i], matches[i], tmp, Scalar(100, 100, 100));
-    string s;
-    std::stringstream out;
-    out << i;
-    s = out.str();
-    imshow("Matches between target and library image " + s, tmp);
-    printf("%lu: %f \n", i, avgDistance(matches[i], 5));
-  }
-  
-  
-  waitKey(0);
-  return 0;*/
+  //return pixelBuckets(argc, argv, 5);
+  return descriptorMatch(argc, argv);
 }
+
