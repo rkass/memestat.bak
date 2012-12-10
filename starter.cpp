@@ -170,14 +170,14 @@ vector<Mat> stringToMats(vector<string> library){
   vector<Mat> ret(library.size());
 
   for(int i = 0; i < ret.size(); i++){
-    ret[i] = imread(library[i], 1);
+    ret[i] = imread(library[i], 0);
     verifyRead(ret[i], library[i]);
   }
   return ret;
 }
 
 Mat stringToMat(string target){
-  Mat ret = imread(target, 1);
+  Mat ret = imread(target, 0);
   verifyRead(ret, target);
   return ret;
 }
@@ -270,13 +270,7 @@ int descriptorMatch(int argc, char** argv){
       maxIndex = i;
     }
   }
-  //match keypoints on target image to each library image and draw
-  /*for (int i = 0; i < libraryDescriptors.size(); i++){
-    puts("here");
-    descriptorMatcher -> match(targetDescriptors, libraryDescriptors[i], matches[i]);
-    puts("herend");
-    printf("%d: %f \n", i, avgDistance(matches[i]));
-  }*/
+ 
   //descriptorMatcher -> match(targetDescriptors, matches, libraryDescriptors);
  printf("Max Matches: %d", max);
   namedWindow( "Display window", CV_WINDOW_AUTOSIZE );// Create a window for display.
