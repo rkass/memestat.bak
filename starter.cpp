@@ -149,6 +149,41 @@ vector<float> assign(Mat img, int buckets){
   }
   return ret;
 }
+
+
+vector<float> assignNormal(Mat img, int buckets){
+  vector<float> ret(buckets*3);
+  float size = 0;
+  for(int i = 0; i < img.rows; i++){
+    for(int j = 0; j < img.cols; j++){
+      if(img.at<cv::Vec3b>(i,j)[0] == img.at<cv::Vec3b>(i,j)[1] == img.at<cv::Vec3b>(i,j)[2] == 0){
+        size =size;}
+      else{
+      size ++;
+      float fbuckets = buckets;
+      float initRed = img.at<cv::Vec3b>(i,j)[0];
+      float initGreen = img.at<cv::Vec3b>(i,j)[1];
+      float initBlue = img.at<cv::Vec3b>(i,j)[2];
+      float red = floor(initRed/255.0 * fbuckets);
+      float green = floor(initGreen/255.0 * fbuckets) + 10;
+      float blue = floor(initBlue/255.0 * fbuckets) + 20;
+      int finalRed = min(fbuckets - 1, red);
+      int finalGreen = min(fbuckets*2 - 1, green);
+      int finalBlue = min(fbuckets*3 - 1, blue);
+     // printf("Red %d", finalRed);
+     // printf("Green %d", finalGreen);
+     // printf("Blue %d", finalBlue);
+      ret[finalRed] += 1;
+      ret[finalGreen] += 1;
+      ret[finalBlue] += 1;}
+    }
+  }
+  for(int i = 0; i < ret.size(); i++){
+    ret[i] = ret[i] / size;
+  }
+  return ret;
+}
+ 
      
 Mat focus(Mat unfocusedImage){ 
      int y_offset= ((unfocusedImage.rows/2)- (unfocusedImage.rows/4)); 
@@ -165,7 +200,29 @@ void verifyRead(Mat img, string s){
     throw new String("Could not read image");
   }
 }    
-    
+
+vector<float> place(float f, vector<float> vf){
+  for(int i = 0; i < vf.size(); i++){
+    if (f > vf[i]){
+      float next = f;
+      for(i; i < vf.size() + 1; i++){
+        float tmp = vf[i];
+        vf[i] = next;
+        next = tmp;
+      }
+      break;
+    }
+  }
+  return vf;
+}
+vector<float> sort(vector<float> unsorted){
+  vector <float> initial;
+  for(int i = 0; i < unsorted.size(); i++){
+    initial = place(unsorted[i], initial);
+  }
+  return initial;
+}
+  
 vector<Mat> stringToMats(vector<string> library){
   vector<Mat> ret(library.size());
 
@@ -176,11 +233,26 @@ vector<Mat> stringToMats(vector<string> library){
   return ret;
 }
 
+int valToIndex(float f, vector<float> vf){
+  puts("started");
+  int ret;
+  for(int i = 0; i < vf.size(); i ++){
+   puts("iter1"); 
+    if (vf[i] == f){
+      ret = i;
+      break;
+    }
+  }
+  puts("returned");
+  printf("returning %d", ret);
+  return ret;
+}
 Mat stringToMat(string target){
   Mat ret = imread(target, 0);
   verifyRead(ret, target);
   return ret;
 }
+
  
 int pixelBuckets(int argc, char** argv, int buckets){
   vector<string> library = getDir();
@@ -196,6 +268,49 @@ int pixelBuckets(int argc, char** argv, int buckets){
   for(int i = 0; i < libAssignments.size(); i++)
     libAssignments[i] = assign(lib[i], buckets, targkps);
   vector <float> targAssignment = assign(targ, buckets, targkps);
+  float secondBest = 100;
+  float bestMatch = 100;
+  int minIndex = 0;
+  int secondMin = 0;
+  vector<float> diffs;
+  for(int i = 0; i < libAssignments.size(); i++){
+    if(targAssignment.size() != libAssignments[i].size())
+      printf("Shits fucked");
+
+    float diff = getDiff(targAssignment, libAssignments[i]);
+    diffs.push_back(diff);
+  }
+  vector<float> sortedDiffs = sort(diffs);
+  for(int i = 0; i < 10; i++)
+    printf("s: %s\n", library[valToIndex(sortedDiffs[i], diffs)].c_str());
+
+  printf("Second Best Match: %s\nScore: %f\n", library[secondMin].c_str(), secondBest);
+  printf("Best Match: %s\nScore: %f\n", library[minIndex].c_str(), bestMatch);
+  return 1;
+}
+  
+int pixelBucketsNormal(int argc, char** argv, int buckets){
+  vector<string> library = getDir();
+  vector<Mat> lib = stringToMats(library);
+  Mat targ = stringToMat(argv[1]);
+  vector <vector<float> > libAssignments(lib.size());
+  for(int i = 0; i < libAssignments.size(); i++)
+    libAssignments[i] = assignNormal(lib[i], buckets);
+  vector <float> targAssignment = assignNormal(targ, buckets);
+ /* vector<float> diffs;
+  //puts("here");
+  for(int i = 0; i < libAssignments.size(); i++){
+    float diff = getDiff(targAssignment, libAssignments[i]);
+    diffs.push_back(diff);
+  }
+  //vector<float> sortedDiffs = sort(diffs);
+  //puts("herse");
+  //for(int i = 0; i < 10; i++)
+    //printf("s: %s\n", library[valToIndex(sortedDiffs[i], diffs)].c_str());
+
+  printf("Second Best Match: %s\nScore: %f\n", library[secondMin].c_str(), secondBest);
+  printf("Best Match: %s\nScore: %f\n", library[minIndex].c_str(), bestMatch);
+  return 1;*/
   float secondBest = 100;
   float bestMatch = 100;
   int minIndex = 0;
@@ -218,9 +333,10 @@ int pixelBuckets(int argc, char** argv, int buckets){
   }
   printf("Second Best Match: %s\nScore: %f\n", library[secondMin].c_str(), secondBest);
   printf("Best Match: %s\nScore: %f\n", library[minIndex].c_str(), bestMatch);
-  return 1;
+  return 1; 
 }
   
+ 
 int descriptorMatch(int argc, char** argv){
   //get images
   vector<Mat> libraryImages = stringToMats(getDir());
@@ -283,13 +399,14 @@ int descriptorMatch(int argc, char** argv){
 /*options: 
   pixelBuckets (takes additional argument buckets)
     Looks at each pixel's RGB values and classify each into one of n buckets.
-    Compare differences in size of each image's total buckets.
+    Compare differences in size of each image's total buckets. Uses keypoints
+  pixelBucketsNormal is like pixelBuckets but does not use keypoints
   descriptorMatch
     Tries to find the image with the minimum distance between descriptors.
 */
 
 int main (int argc, char** argv){
-  //return pixelBuckets(argc, argv, 5);
-  return descriptorMatch(argc, argv);
+    return pixelBucketsNormal(argc, argv, 5);
+//  return descriptorMatch(argc, argv);
 }
 
