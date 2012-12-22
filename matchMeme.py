@@ -428,14 +428,14 @@ def oneDPearson():
   for t in thumbnails:
     if not t[0] == ".":
       target = Image.open('/home/ryan/Dropbox/thumbnails/'+ t)
-      filesInDir = os.listdir(dropBoxDir)
+      filesInDir = os.listdir('/home/ryan/Dropbox/thumbnail_library/')
       best = -2
       bestFile = ""
       secondBest = -2
       secondBestFile = ""
       for fileInDir in filesInDir:
         if not "." in fileInDir:
-          thisDist = oneDPearsonHelp(target, Image.open(dropBoxDir + fileInDir))
+          thisDist = oneDPearsonHelp(target, Image.open('/home/ryan/Dropbox/thumbnail_library/' + fileInDir))
           if thisDist > best:
             secondBest = best
             secondBestFile = bestFile
@@ -508,14 +508,14 @@ def rawDistance():
   for t in thumbnails:
     if not t[0] == ".":
       target = Image.open('/home/ryan/Dropbox/thumbnails/'+ t)
-      filesInDir = os.listdir(dropBoxDir)
+      filesInDir = os.listdir('/home/ryan/Dropbox/thumbnail_library/')
       best = sys.maxint
       bestFile = ""
       secondBest = sys.maxint
       secondBestFile = ""
       for fileInDir in filesInDir:
         if not "." in fileInDir:
-          thisDist = rawDistanceHelp(target, Image.open(dropBoxDir + fileInDir))
+          thisDist = rawDistanceHelp(target, Image.open('/home/ryan/Dropbox/thumbnail_library/' + fileInDir))
           if thisDist < best:
             secondBest = best
             secondBestFile = bestFile
@@ -528,8 +528,58 @@ def rawDistance():
       print "Second Best Match For " + t + ": " + secondBestFile + ", with score: " + str(secondBest)
       print ""
 
-oneDPearson()
 
+def correlationTopTwo(target, directory):
+  best = -1
+  bestFile = ""
+  secondBest = -1
+  secondBestFile = ""
+  for libImage in os.listdir(directory):
+    if not "." in libImage:
+      thisCorrelation = oneDPearsonHelp(target, Image.open(directory + libImage))
+      if thisCorrelation > best:
+        secondBest = best
+        secondBestFile = bestFile
+        best = thisCorrelation
+        bestFile = libImage
+      elif thisCorrelation > secondBest:
+        secondBest = thisCorrelation
+        secondBestFile = libImage
+  return (bestFile, secondBestFile)
+
+def distanceTopTwo(target, directory):
+  best = sys.maxint
+  bestFile = ""
+  secondBest = sys.maxint
+  secondBestFile = ""
+  for libImage in os.listdir(directory):
+    if not "." in libImage:
+      thisDist = rawDistanceHelp(target, Image.open(directory + libImage))
+      if thisDist < best:
+        secondBest = best
+        secondBestFile = bestFile
+        best = thisDist
+        bestFile = libImage
+      elif thisDist < secondBest:
+        secondBest = thisDist
+        secondBestFile = libImage
+  return (bestFile, secondBestFile)
+
+def toptop(target):
+  target = Image.open(target)
+  topTwoCorr = correlationTopTwo(target, dropBoxDir)
+  topTwoDist = distanceTopTwo(target, dropBoxDir)
+  if topTwoDist[0] in topTwoCorr:
+    print "Match: " + topTwoDist[0]
+  elif topTwoDist[1] in topTwoCorr:
+    print "Match: " + topTwoDist[1]
+  else:
+    print "No match :("
+
+toptop("/home/ryan/Dropbox/thumbnails/drunkbaby.jpg")
+#rawDistance()
+#oneDPearson()
+#print oneDPearsonHelp(Image.open('/home/ryan/Dropbox/thumbnails/firstworld.jpg'), Image.open('/home/ryan/Dropbox/thumbnail_library/1stWorldCanadianProblems'))
 
 def harrisDist():
   thumbnails = os.listdir('/home/ryan/Dropbox/thumbnails')

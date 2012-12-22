@@ -2,12 +2,9 @@ import urllib3
 
 dropBoxDir = str.strip(open('dropBoxDir', 'r').read())
 imgs = []
-pageIndex = 9
-while (pageIndex < 15):
-  if (pageIndex == 0):
-    wp = urllib3.PoolManager().request('GET', 'http://imgflip.com/memetemplates')
-  else:
-    wp = urllib3.PoolManager().request('GET', 'http://imgflip.com/memetemplates?page=' + str(pageIndex))
+pageIndex = 8
+while True:
+  wp = urllib3.PoolManager().request('GET', 'http://imgflip.com/memetemplates?page=' + str(pageIndex))
   pageIndex += 1
   page = wp._body
   while(True):
@@ -26,9 +23,10 @@ while (pageIndex < 15):
     imageLinkEndRev = fullSizePage[:fullSizePage.find(".jpg") + 4][::-1]
     imageLink = imageLinkEndRev[:imageLinkEndRev.find("\"")][::-1]
     fullSizeImage = urllib3.PoolManager().request('GET', imageLink)
-    f = open(dropBoxDir + 'library/' + name.replace(' ', '') , 'wb')
+    f = open(dropBoxDir + 'library/' + name.replace(' ', '') + '.jpg' , 'wb')
     f.write(fullSizeImage.data)
     f.close()
     print name
     print imageLink
+  print "Page: " + str(pageIndex)
 
