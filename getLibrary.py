@@ -21,7 +21,7 @@ while (pageIndex < 15):
     name = beginName[:beginName.find("<")]
     thumbnail = beginLink[:beginLink.find(">") - 2]
     thumbnailPage = urllib3.PoolManager().request('GET', thumbnail)
-    f = open(dropBoxDir + 'thumbnail_library/' + name.replace(' ', ''), 'wb')
+    f = open(dropBoxDir + 'thumbnail_library/' + name.replace(' ', '') + '.jpg', 'wb')
     f.write(thumbnailPage.data)
     f.close()
 

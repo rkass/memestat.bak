@@ -1,3 +1,5 @@
+import random
+import ImageChops
 import os   
 import Image 
 import numpy
@@ -198,18 +200,15 @@ def threeDPearsonHelp(img1, img2):
       denom1 += yiym**2
   return num / (math.sqrt(denom0) * math.sqrt(denom1))
       
-
-
-
-def oneDPearsonHelp(img1, img2):
+def oneDPearsonVerticalHelp(img1, img2):
   initWidth, initHeight = img1.size
   img1 = img1.resize((initWidth * 20/initWidth, initHeight * 20/initWidth), Image.BILINEAR)
   width, height = img1.size
   img2 = img2.resize((width, height), Image.BILINEAR)
   xtot, ytot = 0., 0.
   iters = 0
-  for x in range(width):
-    for y in range(height):
+  for x in range(height):
+    for y in range(width):
       first = img1.getpixel((x, y))
       second = img2.getpixel((x, y))
       if isinstance(first, int):
@@ -223,10 +222,59 @@ def oneDPearsonHelp(img1, img2):
   xm = xtot / iters
   ym = ytot / iters
   num, denom0, denom1 = 0., 0., 0.
-  for x in range(width):
-    for y in range(height):
+  for y in range(height):
+    xrow = 0
+    yrow = 0
+    iters = 0
+    for x in range(width):
       first = img1.getpixel((x, y))
       second = img2.getpixel((x, y))
+      if isinstance(first, int):
+        first = (first, first, first)
+      if isinstance(second, int):
+        second = (second, second, second)  
+      if first != (255, 255, 255) and first != (0, 0, 0):
+        xrow += first[0] + first[1] + first[2]
+        yrow += second[0] + second[1] + second[2]
+        iters += 1
+    xrowavg = xrow / iters
+    yrowavg = yrow / iters
+    xixm = xrowavg - xm
+    yiym = yrowavg - ym
+    num += xixm * yiym
+    denom0 += xixm**2
+    denom1 += yiym**2
+  return num / (math.sqrt(denom0) * math.sqrt(denom1))
+
+    
+def oneDPearsonHelp(img1, img2):
+  initWidth, initHeight = img1.size
+  img1 = img1.resize((initWidth * 20/initWidth, initHeight * 20/initWidth), Image.BILINEAR)
+  width, height = img1.size
+  img2 = img2.resize((width, height), Image.BILINEAR)
+  i1 = img1.load()
+  i2 = img2.load()
+  xtot, ytot = 0., 0.
+  iters = 0
+  for x in range(width):
+    for y in range(height):
+      first = i1[x, y]
+      second = i2[x, y]
+      if isinstance(first, int):
+        first = (first, first, first)
+      if isinstance(second, int):
+        second = (second, second, second)  
+      if first != (255, 255, 255) and first != (0, 0, 0):
+        xtot += first[0] + first[1] + first[2]
+        ytot += second[0] + second[1] + second[2]
+        iters += 1
+  xm = xtot / iters
+  ym = ytot / iters
+  num, denom0, denom1 = 0., 0., 0.
+  for x in range(width):
+    for y in range(height):
+      first = i1[x, y]
+      second = i2[x, y]
       if isinstance(first, int):
         first = (first, first, first)
       if isinstance(second, int):
@@ -238,20 +286,19 @@ def oneDPearsonHelp(img1, img2):
       denom1 += (yi - ym)**2
   return num / (math.sqrt(denom0) * math.sqrt(denom1))
       
-
-      
-
 def rawDistanceHelp(img1, img2):
   initWidth, initHeight = img1.size
   img1 = img1.resize((initWidth * 16/initWidth, initHeight * 16/initWidth), Image.BILINEAR)
   width, height = img1.size
   img2 = img2.resize((width, height), Image.BILINEAR)
+  i1 = img1.load()
+  i2 = img2.load()
   distance = 0.0
   iters = 0.0
   for x in range(width):
     for y in range(height):
-      first = img1.getpixel((x, y))
-      second = img2.getpixel((x, y))
+      first = i1[x, y]
+      second = i2[x, y]
       if isinstance(first, int):
         first = (first, first, first)
       if isinstance(second, int):
@@ -260,6 +307,43 @@ def rawDistanceHelp(img1, img2):
         distance += math.sqrt((first[0] - second[0])**2 +
           (first[1] - second[1])**2 + (first[2] - second[2])**2) 
         iters += 1
+  return distance/iters
+
+def rawDistanceSortedHelp(img1, img2):
+  initWidth, initHeight = img1.size
+  img1 = img1.resize((initWidth * 16/initWidth, initHeight * 16/initWidth), Image.BILINEAR)
+  width, height = img1.size
+  img2 = img2.resize((width, height), Image.BILINEAR)
+  i1 = img1.load()
+  i2 = img2.load()
+  distance = 0.0
+  iters = 0.0
+  ii1 = {}
+  ii2 = {}
+  for x in range(width):
+    for y in range(height):
+      first = i1[x, y]
+      second = i2[x, y]
+      if isinstance(first, int):
+        first = (first, first, first)
+      if isinstance(second, int):
+        second = (second, second, second)
+      ii1[first[0] + first[1] + first[2]+random.random()] = (x,y)
+      ii2[second[0] + second[1] + second[2] + random.random()] = (x, y)
+  s1 = sorted(ii1)
+  s2 = sorted(ii2)
+  for x in range(len(s1)):
+    firstx, firsty = ii1[s1[x]]
+    secondx, secondy = ii2[s2[x]]
+    first = i1[firstx, firsty]
+    second = i2[secondx, secondy]
+    if isinstance(first, int):
+      first = (first, first, first)
+    if isinstance(second, int):
+      second = (second, second, second)
+    iters += 1
+    distance += math.sqrt((first[0] - second[0])**2 + (first[1] - second[1])**2 + (first[2] - second[2])**2)
+
   return distance/iters
 
 def colorTotalsHelp(img1, img2):
@@ -370,7 +454,55 @@ def colorTotalsSplitHelp(img1, img2, hsplit, vsplit):
     distance += (r0 - r1)**2 + (g0 - g1)**2 + (b0 - b1)**2
   return distance
      
+def histogramSplitHelp(img1, img2, hsplit, vsplit, buckets):
+  distance = 0.
+  width0, height0 = img1.size
+  width1, height1 = img2.size
+  img1size = width0 * height0
+  img2size = width1 * height1
+  for iters in range(hsplit * vsplit):
+    hist1 = [0]*3*buckets
+    hist2 = [0]*3*buckets
+    osize = 0.
+    tsize = 0.
+    for x in range(((iters + 1) % hsplit) * (width0 / hsplit)):
+      for y in range(((iters + 1) % vsplit) * (height0 / vsplit)):
+        pix = img1.getpixel((x, y))
+        if isinstance(pix, int):
+          pix = (pix, pix, pix)
+        red = math.floor(pix[0] / 255. * buckets)
+        #print red
+        #print buckets
+        #comp = buckets - 1.
+        #print comp
+        #jx = min(5., 3.)
+        #red = min(comp , red)
+        green = math.floor(pix[1] / 255. * buckets)
+        blue = math.floor(pix[2] / 255. * buckets)
+        hist1[int(red)] += 1
+        hist1[int(green)] += 1
+        hist1[int(blue)] += 1
+        osize += 1
+    for x in range(((iters + 1) % hsplit) * (width1 / hsplit)):
+      for y in range(((iters + 1) % vsplit) * (height1 / vsplit)):
+        pix = img2.getpixel((x, y))
+        if isinstance(pix, int):
+          pix = (pix, pix, pix)
+        red = math.floor(pix[0] / 255. * buckets)
+        green = math.floor(pix[1] / 255. * buckets)
+        blue = math.floor(pix[2] / 255. * buckets)
+        hist2[int(red)] += 1
+        hist2[int(green)] += 1
+        hist2[int(blue)] += 1
+        tsize += 1
+    print osize
+    print tsize
 
+    for x in range(len(hist1)):
+      distance += hist1[x]/osize - hist2[x]/tsize
+  distance += (r0 - r1)**2 + (g0 - g1)**2 + (b0 - b1)**2
+  return distance
+ 
 def colorTotals():
   thumbnails = os.listdir('/home/ryan/Dropbox/thumbnails/')
   for t in thumbnails:
@@ -447,6 +579,32 @@ def oneDPearson():
       print "Best Match For " + t + ": " + bestFile + ", with score: " + str(best)
       print "Second Best Match For " + t + ": " + secondBestFile + ", with score: " + str(secondBest)
       print ""
+
+def oneDPearsonVertical():
+  thumbnails = os.listdir('/home/ryan/Dropbox/thumbnails')
+  for t in thumbnails:
+    if not t[0] == ".":
+      target = Image.open('/home/ryan/Dropbox/thumbnails/'+ t)
+      filesInDir = os.listdir('/home/ryan/Dropbox/thumbnail_library/')
+      best = -2
+      bestFile = ""
+      secondBest = -2
+      secondBestFile = ""
+      for fileInDir in filesInDir:
+        if not "." in fileInDir:
+          thisDist = oneDPearsonVerticalHelp(target, Image.open('/home/ryan/Dropbox/thumbnail_library/' + fileInDir))
+          if thisDist > best:
+            secondBest = best
+            secondBestFile = bestFile
+            best = thisDist
+            bestFile = fileInDir
+          elif thisDist > secondBest:
+            secondBest = thisDist
+            secondBestFile = fileInDir
+      print "Best Match For " + t + ": " + bestFile + ", with score: " + str(best)
+      print "Second Best Match For " + t + ": " + secondBestFile + ", with score: " + str(secondBest)
+      print ""
+
 
 def colorTotalsSplit(hsplit, vsplit):
   thumbnails = os.listdir('/home/ryan/Dropbox/thumbnails')
@@ -528,6 +686,91 @@ def rawDistance():
       print "Second Best Match For " + t + ": " + secondBestFile + ", with score: " + str(secondBest)
       print ""
 
+def rawDistanceSorted():
+  thumbnails = os.listdir('/home/ryan/Dropbox/thumbnails')
+  for t in thumbnails:
+    if not t[0] == ".":
+      target = Image.open('/home/ryan/Dropbox/thumbnails/'+ t)
+      filesInDir = os.listdir('/home/ryan/Dropbox/library/')
+      best = sys.maxint
+      bestFile = ""
+      secondBest = sys.maxint
+      secondBestFile = ""
+      for fileInDir in filesInDir:
+        if fileInDir[0] != ".":
+          thisDist = rawDistanceSortedHelp(target, Image.open('/home/ryan/Dropbox/library/' + fileInDir))
+          if thisDist < best:
+            secondBest = best
+            secondBestFile = bestFile
+            best = thisDist
+            bestFile = fileInDir
+          elif thisDist < secondBest:
+            secondBest = thisDist
+            secondBestFile = fileInDir
+      print "Best Match For " + t + ": " + bestFile + ", with score: " + str(best)
+      print "Second Best Match For " + t + ": " + secondBestFile + ", with score: " + str(secondBest)
+      print ""
+
+def splitHist():
+  thumbnails = os.listdir('/home/ryan/Dropbox/thumbnails')
+  for t in thumbnails:
+    if not t[0] == ".":
+      target = Image.open('/home/ryan/Dropbox/thumbnails/'+ t)
+      filesInDir = os.listdir('/home/ryan/Dropbox/library/')
+      best = sys.maxint
+      bestFile = ""
+      secondBest = sys.maxint
+      secondBestFile = ""
+      for fileInDir in filesInDir:
+        if fileInDir[0] != ".":
+          thisDist = histogramSplitHelp(target, Image.open('/home/ryan/Dropbox/library/' + fileInDir), 3, 3, 5)
+          if thisDist < best:
+            secondBest = best
+            secondBestFile = bestFile
+            best = thisDist
+            bestFile = fileInDir
+          elif thisDist < secondBest:
+            secondBest = thisDist
+            secondBestFile = fileInDir
+      print "Best Match For " + t + ": " + bestFile + ", with score: " + str(best)
+      print "Second Best Match For " + t + ": " + secondBestFile + ", with score: " + str(secondBest)
+      print ""
+
+splitHist()
+def totalIntensity(im):
+  width, height = im.size
+  intensity = 0
+  for x in range(width):
+    for y in range(height):
+      pix = im.getpixel((x, y))
+      intensity += pix[0] + pix[1] + pix[2]
+
+def chopsDistance():
+  thumbnails = os.listdir('/home/ryan/Dropbox/thumbnails')
+  for t in thumbnails:
+    if not t[0] == ".":
+      target = Image.open('/home/ryan/Dropbox/thumbnails/' + t)
+      filesInDir = os.listdir('/home/ryan/Dropbox/library')
+      best = sys.maxint
+      bestFile = ""
+      secondBest = sys.maxint
+      secondBestFile = ""
+      for fileInDir in filesInDir:
+        if fileInDir[0] != ".":
+          thisDist = totalIntensity(ImageChops.difference(target, Image.open('/home/ryan/Dropbox/library/' + fileInDir)))
+        if thisDist < best:
+          secondBest = best
+          secondBestFile = bestFile
+          best = thisDist
+          bestFile = fileInDir
+        elif thisDist < secondBest:
+          secondBest = thisDist
+          secondBestFile = fileInDir
+    print "Best Match For " + t + ": " + bestFile + ", with score: " + str(best)
+    print "Second Best Match For " + t + ": " + secondBestFile + ", with score: " + str(secondBest)
+    print ""
+
+
 
 def correlationTopTwo(target, directory):
   best = -1
@@ -535,7 +778,7 @@ def correlationTopTwo(target, directory):
   secondBest = -1
   secondBestFile = ""
   for libImage in os.listdir(directory):
-    if not "." in libImage:
+    if libImage[0] != ".":
       thisCorrelation = oneDPearsonHelp(target, Image.open(directory + libImage))
       if thisCorrelation > best:
         secondBest = best
@@ -553,7 +796,7 @@ def distanceTopTwo(target, directory):
   secondBest = sys.maxint
   secondBestFile = ""
   for libImage in os.listdir(directory):
-    if not "." in libImage:
+    if libImage[0] != ".":
       thisDist = rawDistanceHelp(target, Image.open(directory + libImage))
       if thisDist < best:
         secondBest = best
@@ -564,6 +807,28 @@ def distanceTopTwo(target, directory):
         secondBest = thisDist
         secondBestFile = libImage
   return (bestFile, secondBestFile)
+
+def correlationTopN(target, directory, n):
+  correlations = {}
+  for libImage in os.listdir(directory):
+    if libImage[0] != ".":
+      correlations[oneDPearsonHelp(target, Image.open(directory + libImage))] = libImage
+  ret = []
+  ordered = sorted(correlations)[::-1]
+  for corr in range(n):
+    ret.append(correlations[ordered[corr]])
+  return ret
+
+def distanceTopN(target, directory, n):
+  distances = {}
+  for libImage in os.listdir(directory):
+    if libImage[0] != ".":
+      distances[rawDistanceHelp(target, Image.open(directory + libImage))] = libImage
+  ret = []
+  ordered = sorted(distances)
+  for dist in range(n):
+    ret.append(distances[ordered[dist]])
+  return ret
 
 def toptop(target):
   target = Image.open(target)
@@ -576,10 +841,21 @@ def toptop(target):
   else:
     print "No match :("
 
-toptop("/home/ryan/Dropbox/thumbnails/drunkbaby.jpg")
+def topN(target, n):
+  target = Image.open(target)
+  topNCorr = correlationTopN(target, dropBoxDir, n)
+  topNDist = distanceTopN(target, dropBoxDir, n)
+  for dist in topNDist:
+    if dist in topNCorr:
+      print "Match: " + dist
+      break
+chopsDistance()
+#oneDPearsonVertical()
+#topN("/home/ryan/Dropbox/thumbnails/interestingman.jpg", 4)
 #rawDistance()
 #oneDPearson()
 #print oneDPearsonHelp(Image.open('/home/ryan/Dropbox/thumbnails/firstworld.jpg'), Image.open('/home/ryan/Dropbox/thumbnail_library/1stWorldCanadianProblems'))
+#rawDistanceSorted()
 
 def harrisDist():
   thumbnails = os.listdir('/home/ryan/Dropbox/thumbnails')

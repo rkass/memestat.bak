@@ -7,5 +7,5 @@ import os
 dropBoxDir = str.strip(open('../dropBoxDir').read())
 filesInDir = os.listdir(dropBoxDir + 'library')
 for f in filesInDir:
-  newFile = dropBoxDir + 'library/' + f  
+  newFile = 'library/' + f  
   ImageMacro.objects.get_or_create(filename = newFile)
