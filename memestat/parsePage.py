@@ -6,7 +6,8 @@ from django.core.management import setup_environ
 setup_environ(settings)
 from stats.models import ImageMacro
 from stats.models import Meme
-
+dropBoxDir = str.strip(open('../dropBoxDir', 'r').read())
+print dropBoxDir
 def fullSizePhoto(url):
   page = urllib3.PoolManager().request('GET', url)._body
   pageRev = page[:(page.find('.jpg') + 4)][::-1]
@@ -25,7 +26,7 @@ def processItem(arr):
   elif data['thumbnail'] != 'default':
     #have not evaluated this submission yet, run tests and store
     thumbnailPage = urllib3.PoolManager().request('GET', data['thumbnail'])
-    filepath = '/home/ryan/Dropbox/target.jpg'
+    filepath = dropBoxDir + 'target.jpg'
     f = open(filepath, 'wb')
     f.write(urllib3.PoolManager().request('GET', data['thumbnail']).data)
     f.close()
@@ -57,11 +58,4 @@ while(goDeeper):
   lastId = pageJson['data']['after']
   page = 'http://reddit.com/r/adviceanimals.json?after=' + lastId
   print "On to the next"
-  
-
-
-
-
- 
-  
 
