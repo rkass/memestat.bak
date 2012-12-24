@@ -7,7 +7,6 @@ setup_environ(settings)
 from stats.models import ImageMacro
 from stats.models import Meme
 dropBoxDir = str.strip(open('../dropBoxDir', 'r').read())
-print dropBoxDir
 def fullSizePhoto(url):
   page = urllib3.PoolManager().request('GET', url)._body
   pageRev = page[:(page.find('.jpg') + 4)][::-1]
