@@ -30,7 +30,13 @@ def processItem(arr):
     f = open(filepath, 'wb')
     f.write(urllib3.PoolManager().request('GET', data['thumbnail']).data)
     f.close()
-    classification = classify.classify(filepath)
+
+#classify.classify() gets elements 
+#1: image macro filepath that it belongs to- (0 if no match)  
+#2: topTwoDist touple - (best match, 2nd best match)
+#3: topTwoCorr touple - (best match, 2nd best match)
+    classification = classify.classify(filepath) 
+
     if ".jpg" in data['url']:
       fullSize = data['url']
     else:

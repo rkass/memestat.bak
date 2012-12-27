@@ -2,6 +2,7 @@ import Image
 import math
 import os
 import sys
+import algo2
 
 
 dropBoxDir = str.strip(open('../dropBoxDir', 'r').read()) + 'library/'
@@ -107,6 +108,10 @@ def distanceTopTwo(target, directory):
 
 def classify(target):
   target = Image.open(target)
+  target_crop = algo2.centerCut(target);
+  xtiles=7;
+  target_crop_split = algo2.compareWithTCH(target_corp, xtiles);
+
   topTwoCorr = correlationTopTwo(target, dropBoxDir)
   topTwoDist = distanceTopTwo(target, dropBoxDir)
   if topTwoDist[0] in topTwoCorr:
