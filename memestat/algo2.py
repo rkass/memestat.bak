@@ -2,6 +2,7 @@ import Image
 import math
 import os
 import sys
+import numpy
 
 
 
@@ -13,7 +14,7 @@ def centerCut(im):
   return cropped;
 
 
-def compareWithTCH(im, xtiles):
+def compareWithTCH(im, xtiles, buckets):
   add=(im.size[0]/xtiles);
   xsplit=[];
   splitimage=[];
@@ -24,18 +25,56 @@ def compareWithTCH(im, xtiles):
     splitimage.append(im.crop(box));
    
     
-    #TCH_final[i] = TCH(split_image[i], 8)
   
-  return splitimage
+  return TCH(splitimage, buckets)
 
 def TCH (split_image, buckets):
-  color_bucket_split = 255/buckets;
-  intensity_bucket_split = 765/buckets;
-  for i in xrange(0, split_image.size):
+  TCH_array=[];
+  sized=float(0.0);
+    
+  for i in xrange(0, len(split_image)):
     im = split_image[i].load()
-    TCH_curr=[[0]*4]*10
-    for x in xrange(0, im.size[0]):
-      for y in xrange(0,im.size[1]):
+    TCH_curr =[[0 for col in range(buckets)] for row in range(4)]
+    for x in xrange(0, split_image[i].size[0]):
+      for y in xrange(0, split_image[i].size[1]):
         sized+=1;
-      #if im[x,y][0] = 
+        red =   int(round(((im[x,y][0])/255.0)*(buckets-1)));
+        green = int(round(((im[x,y][1])/255.0)*(buckets-1)));
+        blue =  int(round(((im[x,y][2])/255.0)*(buckets-1)));
+        intense=int(round((red+green+blue)/3));
+
+        TCH_curr[0][red]+=1
+        TCH_curr[1][green]+=1
+        TCH_curr[2][blue]+=1
+        TCH_curr[3][intense]+=1
+  
+    TCH_array.append(TCH_curr);
+
+  TCH_final = numpy.asarray(TCH_array, dtype=float);
+  TCH_final *= (1.0/sized)
+  return TCH_final;
+
+   
+"""
+x = Image.open("/home/ryan/Dropbox/library/AnnoyingFacebookGirl.jpg");
+z = centerCut(x);
+z.show();
+xtiles=7;
+buckets = 11;
+result = compareWithTCH(z, xtiles, buckets)
+print result"""
+
+      
+      
+     
+      
+
+
+
+
+
+
+
+
+
 

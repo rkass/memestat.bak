@@ -8,7 +8,7 @@ import math
 from cv2 import *
 import scipy
 import harris
-import memestat.algo2
+import memestat.algo2 as andy
 
 dropBoxDir = str.strip(open('dropBoxDir', 'r').read()) + 'library/'
 
@@ -247,6 +247,17 @@ def oneDPearsonVerticalHelp(img1, img2):
     denom1 += yiym**2
   return num / (math.sqrt(denom0) * math.sqrt(denom1))
 
+
+def tchHelp(img1, img2, tiles, buckets):
+  h1 = andy.compareWithTCH(img1, tiles, buckets)
+  h2 = andy.compareWithTCH(img2, tiles, buckets)
+  distance = 0.
+  for t in range(tiles):
+    for b in range(buckets):
+      distance += math.sqrt((h1[t][0][b] - h2[t][0][b])**2 + 
+        (h1[t][1][b] - h2[t][1][b])**2 + (h1[t][2][b] - h2[t][2][b])**2)
+  return distance
+    
     
 def oneDPearsonHelp(img1, img2):
   initWidth, initHeight = img1.size
@@ -733,7 +744,34 @@ def rawDistance():
       print "Second Best Match For " + t + ": " + secondBestFile + ", with score: " + str(secondBest)
       print ""
 
-oneDPearson()
+
+def tch():
+  thumbnails = os.listdir('/home/ryan/Dropbox/thumbnails')
+  for t in thumbnails:
+    if not t[0] == ".":
+      target = Image.open('/home/ryan/Dropbox/thumbnails/'+ t)
+      filesInDir = os.listdir('/home/ryan/Dropbox/library/')
+      best = sys.maxint
+      bestFile = ""
+      secondBest = sys.maxint
+      secondBestFile = ""
+      for fileInDir in filesInDir:
+        if not fileInDir[0] == ".":
+          thisDist = tchHelp(target, Image.open('/home/ryan/Dropbox/library/' + fileInDir), 2, 5)
+          print "Evaled"
+          if thisDist < best:
+            secondBest = best
+            secondBestFile = bestFile
+            best = thisDist
+            bestFile = fileInDir
+          elif thisDist < secondBest:
+            secondBest = thisDist
+            secondBestFile = fileInDir
+      print "Best Match For " + t + ": " + bestFile + ", with score: " + str(best)
+      print "Second Best Match For " + t + ": " + secondBestFile + ", with score: " + str(secondBest)
+      print ""
+
+tch()
 def rawDistanceSorted():
   thumbnails = os.listdir('/home/ryan/Dropbox/thumbnails')
   for t in thumbnails:
