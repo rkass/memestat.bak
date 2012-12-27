@@ -39,29 +39,3 @@ def TCH (split_image, buckets):
         sized+=1;
       #if im[x,y][0] = 
 
-
-
-
-
-x = Image.open("/home/andrew/Downloads/testimg2.jpg");
-z = centerCut(x);
-z.show();
-xtiles=7;
-result = compareWithTCH(z, xtiles)
-for i in range(0, xtiles):
-  result[i].show();
-
-      
-      
-     
-      
-
-
-
-
-
-
-
-
-
-

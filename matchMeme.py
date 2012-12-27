@@ -8,6 +8,7 @@ import math
 from cv2 import *
 import scipy
 import harris
+import memestat.algo2
 
 dropBoxDir = str.strip(open('dropBoxDir', 'r').read()) + 'library/'
 
@@ -264,7 +265,7 @@ def oneDPearsonHelp(img1, img2):
         first = (first, first, first)
       if isinstance(second, int):
         second = (second, second, second)  
-      if first != (255, 255, 255) and first != (0, 0, 0):
+      if True:#first != (255, 255, 255) and first != (0, 0, 0):
         xtot += first[0] + first[1] + first[2]
         ytot += second[0] + second[1] + second[2]
         iters += 1
@@ -285,6 +286,52 @@ def oneDPearsonHelp(img1, img2):
       denom0 += (xi - xm)**2
       denom1 += (yi - ym)**2
   return num / (math.sqrt(denom0) * math.sqrt(denom1))
+
+
+def oneDPearsonHelp2(img1, img2):
+  initWidth, initHeight = img1.size
+  #img1 = img1.resize((initWidth * 20/initWidth, initHeight * 20/initWidth), Image.BILINEAR)
+  width, height = img1.size
+  #img2 = img2.resize((width, height), Image.BILINEAR)
+  i1 = img1.load()
+  i2 = img2.load()
+  xtot, ytot = 0., 0.
+  iters = 0
+  for x in range(width):
+    for y in range(height):
+      first = i1[x, y]
+      second = i2[x, y]
+      if isinstance(first, int):
+        first = (first, first, first)
+      if isinstance(second, int):
+        second = (second, second, second)  
+      if True:#first != (255, 255, 255) and first != (0, 0, 0):
+        xtot += first[0] + first[1] + first[2]
+        ytot += second[0] + second[1] + second[2]
+        iters += 1
+  xm = xtot / iters
+  ym = ytot / iters
+  num, denom0, denom1 = 0., 0., 0.
+  for x in range(width):
+    for y in range(height):
+      first = i1[x, y]
+      second = i2[x, y]
+      if isinstance(first, int):
+        first = (first, first, first)
+      if isinstance(second, int):
+        second = (second, second, second)  
+      xi = first[0] + first[1] + first[2]
+      yi = second[0] + second[1] + second[2]
+      num += (xi - xm) * (yi - ym)
+      denom0 += (xi - xm)**2
+      denom1 += (yi - ym)**2
+  return num / (math.sqrt(denom0) * math.sqrt(denom1))
+
+def tiledOneDPearsonHelp(imgarr1, imgarr2):
+  corrs = []
+  for x in range(len(imgarr1)):
+    corrs.append(oneDPearsonHelp(imgarr1[x], imgarr2[x]))
+  return sum(corrs)/len(corrs)
       
 def rawDistanceHelp(img1, img2):
   initWidth, initHeight = img1.size
@@ -566,8 +613,8 @@ def oneDPearson():
       secondBest = -2
       secondBestFile = ""
       for fileInDir in filesInDir:
-        if not "." in fileInDir:
-          thisDist = oneDPearsonHelp(target, Image.open('/home/ryan/Dropbox/thumbnail_library/' + fileInDir))
+        if fileInDir[0] != ".":
+          thisDist = tiledOneDPearsonHelp(memestat.algo2.compareWithTCH(memestat.algo2.centerCut(target), 2), memestat.algo2.compareWithTCH(memestat.algo2.centerCut(Image.open('/home/ryan/Dropbox/thumbnail_library/' + fileInDir)), 2))
           if thisDist > best:
             secondBest = best
             secondBestFile = bestFile
@@ -666,14 +713,14 @@ def rawDistance():
   for t in thumbnails:
     if not t[0] == ".":
       target = Image.open('/home/ryan/Dropbox/thumbnails/'+ t)
-      filesInDir = os.listdir('/home/ryan/Dropbox/thumbnail_library/')
+      filesInDir = os.listdir('/home/ryan/Dropbox/library/')
       best = sys.maxint
       bestFile = ""
       secondBest = sys.maxint
       secondBestFile = ""
       for fileInDir in filesInDir:
-        if not "." in fileInDir:
-          thisDist = rawDistanceHelp(target, Image.open('/home/ryan/Dropbox/thumbnail_library/' + fileInDir))
+        if not fileInDir[0] == ".":
+          thisDist = rawDistanceHelp(target, Image.open('/home/ryan/Dropbox/library/' + fileInDir))
           if thisDist < best:
             secondBest = best
             secondBestFile = bestFile
@@ -686,6 +733,7 @@ def rawDistance():
       print "Second Best Match For " + t + ": " + secondBestFile + ", with score: " + str(secondBest)
       print ""
 
+oneDPearson()
 def rawDistanceSorted():
   thumbnails = os.listdir('/home/ryan/Dropbox/thumbnails')
   for t in thumbnails:
@@ -736,7 +784,6 @@ def splitHist():
       print "Second Best Match For " + t + ": " + secondBestFile + ", with score: " + str(secondBest)
       print ""
 
-splitHist()
 def totalIntensity(im):
   width, height = im.size
   intensity = 0
@@ -849,7 +896,6 @@ def topN(target, n):
     if dist in topNCorr:
       print "Match: " + dist
       break
-chopsDistance()
 #oneDPearsonVertical()
 #topN("/home/ryan/Dropbox/thumbnails/interestingman.jpg", 4)
 #rawDistance()
