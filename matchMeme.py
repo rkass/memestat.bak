@@ -8,6 +8,7 @@ import math
 from cv2 import *
 import scipy
 import harris
+import cPickle
 import memestat.algo2 as andy
 
 dropBoxDir = str.strip(open('dropBoxDir', 'r').read()) + 'library/'
@@ -257,6 +258,16 @@ def tchHelp(img1, img2, tiles, buckets):
       distance += math.sqrt((h1[t][0][b] - h2[t][0][b])**2 + 
         (h1[t][1][b] - h2[t][1][b])**2 + (h1[t][2][b] - h2[t][2][b])**2)
   return distance
+
+def tchHelp2(h1, h2, tiles, buckets):
+  distance = 0.
+  for t in range(tiles):
+    for b in range(buckets):
+      distance += math.sqrt((h1[t][0][b] - h2[t][0][b])**2 + 
+        (h1[t][1][b] - h2[t][1][b])**2 + (h1[t][2][b] - h2[t][2][b])**2 + (h1[t][3][b] - h2[t][3][b])**2)
+
+  return distance
+
     
     
 def oneDPearsonHelp(img1, img2):
@@ -744,9 +755,136 @@ def rawDistance():
       print "Second Best Match For " + t + ": " + secondBestFile + ", with score: " + str(secondBest)
       print ""
 
+def preComp():
+  """
+  filesInDir = os.listdir('/home/ryan/Dropbox/thumbnail_library/')
+  hists = {}
+  for fileInDir in filesInDir:
+    if fileInDir[0] != ".": hists[fileInDir] = andy.compareWithTCH(Image.open('/home/ryan/Dropbox/thumbnail_library/' + fileInDir), 5, 3)
+  f = open("hists53", "w") 
+  z = cPickle.dumps(hists)
+  f.write(z)
+  f.close()
+  hists = {}
+  for fileInDir in filesInDir:
+    if fileInDir[0] != ".": hists[fileInDir] = andy.compareWithTCH(Image.open('/home/ryan/Dropbox/thumbnail_library/' + fileInDir), 5, 7)
+  f = open("hists57", "w") 
+  z = cPickle.dumps(hists)
+  f.write(z)
+  f.close()
+  hists = {} 
+ 
+  print "done"
+  for fileInDir in filesInDir:
+    if fileInDir[0] != ".": hists[fileInDir] = andy.compareWithTCH(Image.open('/home/ryan/Dropbox/thumbnail_library/' + fileInDir), 5, 11)
+  f = open("hists511", "w")     
+  z = cPickle.dumps(hists)
+  f.write(z)
+  f.close()
+  hists = {}  
+  print "done"
+  for fileInDir in filesInDir:
+    if fileInDir[0] != ".": hists[fileInDir] = andy.compareWithTCH(Image.open('/home/ryan/Dropbox/thumbnail_library/' + fileInDir), 5, 15)
+  f = open("hists515", "w")
+  z = cPickle.dumps(hists)
+  f.write(z)
+  f.close()
+  hists = {}  
+  print "done" 
+  for fileInDir in filesInDir:
+    if fileInDir[0] != ".": hists[fileInDir] = andy.compareWithTCH(Image.open('/home/ryan/Dropbox/thumbnail_library/' + fileInDir), 5, 25)
+  f = open("hists525", "w")
+  z = cPickle.dumps(hists)
+  f.write(z)
+  f.close()
+  hists = {}    
+  print "done"
+  for fileInDir in filesInDir:
+    if fileInDir[0] != ".": hists[fileInDir] = andy.compareWithTCH(Image.open('/home/ryan/Dropbox/thumbnail_library/' + fileInDir), 5, 38)
+  f = open("hists538", "w")
+  z = cPickle.dumps(hists)
+  f.write(z)
+  f.close()
+  hists = {}  
+  print "done"
+  for fileInDir in filesInDir:
+    if fileInDir[0] != ".": hists[fileInDir] = andy.compareWithTCH(Image.open('/home/ryan/Dropbox/thumbnail_library/' + fileInDir), 5, 50)
+  f = open("hists550", "w")
+  z = cPickle.dumps(hists)
+  f.write(z)
+  f.close()
+  print "done"
+  """
+  filesInDir = os.listdir('/home/ryan/Dropbox/library/')
+  hists = {}
+  for fileInDir in filesInDir:
+    if fileInDir[0] != ".": hists[fileInDir] = andy.compareWithTCH(Image.open('/home/ryan/Dropbox/library/' + fileInDir), 5, 3)
+  f = open("histsl53", "w") 
+  z = cPickle.dumps(hists)
+  f.write(z)
+  f.close()
+  hists = {}
+  for fileInDir in filesInDir:
+    if fileInDir[0] != ".": hists[fileInDir] = andy.compareWithTCH(Image.open('/home/ryan/Dropbox/library/' + fileInDir), 5, 7)
+  f = open("histsl57", "w") 
+  z = cPickle.dumps(hists)
+  f.write(z)
+  f.close()
+  hists = {} 
+ 
+  print "done"
+  
+  for fileInDir in filesInDir:
+    if fileInDir[0] != ".": hists[fileInDir] = andy.compareWithTCH(Image.open('/home/ryan/Dropbox/library/' + fileInDir), 5, 11)
+  f = open("histsl511", "w")     
+  z = cPickle.dumps(hists)
+  f.write(z)
+  f.close()
+  hists = {}  
+  print "done"
+  for fileInDir in filesInDir:
+    if fileInDir[0] != ".": hists[fileInDir] = andy.compareWithTCH(Image.open('/home/ryan/Dropbox/library/' + fileInDir), 5, 15)
+  f = open("histsl515", "w")
+  z = cPickle.dumps(hists)
+  f.write(z)
+  f.close()
+  hists = {}  
+  print "done" 
+  for fileInDir in filesInDir:
+    if fileInDir[0] != ".": hists[fileInDir] = andy.compareWithTCH(Image.open('/home/ryan/Dropbox/library/' + fileInDir), 5, 25)
+  f = open("histsl525", "w")
+  z = cPickle.dumps(hists)
+  f.write(z)
+  f.close()
+  hists = {}    
+  print "done"
+  for fileInDir in filesInDir:
+    if fileInDir[0] != ".": hists[fileInDir] = andy.compareWithTCH(Image.open('/home/ryan/Dropbox/library/' + fileInDir), 5, 38)
+  f = open("histsl538", "w")
+  z = cPickle.dumps(hists)
+  f.write(z)
+  f.close()
+  hists = {}  
+  print "done"
+  for fileInDir in filesInDir:
+    if fileInDir[0] != ".": hists[fileInDir] = andy.compareWithTCH(Image.open('/home/ryan/Dropbox/library/' + fileInDir), 5, 50)
+  f = open("histsl550", "w")
+  z = cPickle.dumps(hists)
+  f.write(z)
+  f.close()
+  print "done"
+
+
+
+  
+
 
 def tch():
   thumbnails = os.listdir('/home/ryan/Dropbox/thumbnails')
+  f = open("histsl515", "r")
+  hists = f.read()
+  f.close()
+  hists = cPickle.loads(hists)
   for t in thumbnails:
     if not t[0] == ".":
       target = Image.open('/home/ryan/Dropbox/thumbnails/'+ t)
@@ -755,10 +893,10 @@ def tch():
       bestFile = ""
       secondBest = sys.maxint
       secondBestFile = ""
+      targHist = andy.compareWithTCH(target,5,15)
       for fileInDir in filesInDir:
         if not fileInDir[0] == ".":
-          thisDist = tchHelp(target, Image.open('/home/ryan/Dropbox/library/' + fileInDir), 2, 5)
-          print "Evaled"
+          thisDist = tchHelp2(targHist, hists[fileInDir], 5, 15)
           if thisDist < best:
             secondBest = best
             secondBestFile = bestFile

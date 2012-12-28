@@ -38,9 +38,12 @@ def TCH (split_image, buckets):
     for x in xrange(0, split_image[i].size[0]):
       for y in xrange(0, split_image[i].size[1]):
         sized+=1;
-        red =   int(round(((im[x,y][0])/255.0)*(buckets-1)));
-        green = int(round(((im[x,y][1])/255.0)*(buckets-1)));
-        blue =  int(round(((im[x,y][2])/255.0)*(buckets-1)));
+        pix = im[x, y]
+        if isinstance(pix, int): 
+          pix = (pix, pix, pix)
+        red =   int(round(((pix[0])/255.0)*(buckets-1)));
+        green = int(round(((pix[1])/255.0)*(buckets-1)));
+        blue =  int(round(((pix[2])/255.0)*(buckets-1)));
         intense=int(round((red+green+blue)/3));
 
         TCH_curr[0][red]+=1
