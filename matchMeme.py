@@ -272,7 +272,7 @@ def tchHelp2(h1, h2, tiles, buckets):
     
 def oneDPearsonHelp(img1, img2):
   initWidth, initHeight = img1.size
-  img1 = img1.resize((initWidth * 20/initWidth, initHeight * 20/initWidth), Image.BILINEAR)
+  img1 = img1.resize((16, 16), Image.BILINEAR)
   width, height = img1.size
   img2 = img2.resize((width, height), Image.BILINEAR)
   i1 = img1.load()
@@ -355,9 +355,42 @@ def tiledOneDPearsonHelp(imgarr1, imgarr2):
     corrs.append(oneDPearsonHelp(imgarr1[x], imgarr2[x]))
   return sum(corrs)/len(corrs)
       
-def rawDistanceHelp(img1, img2):
+
+      
+def rawDistanceHelpCenterCut(img1, img2):
+  img1 = andy.centerCut(img1)
+  img2 = andy.centerCut(img2)
   initWidth, initHeight = img1.size
-  img1 = img1.resize((initWidth * 16/initWidth, initHeight * 16/initWidth), Image.BILINEAR)
+  
+  img1 = img1.resize((8, 8), Image.BILINEAR)
+  width, height = img1.size
+  img2 = img2.resize((width, height), Image.BILINEAR)
+  i1 = img1.load()
+  i2 = img2.load()
+  distance = 0.0
+  iters = 0.0
+  for x in range(width):
+    for y in range(height):
+      first = i1[x, y]
+      second = i2[x, y]
+      if isinstance(first, int):
+        first = (first, first, first)
+      if isinstance(second, int):
+        second = (second, second, second)
+      if True:#first != (255, 255, 255):
+        distance += math.sqrt((first[0] - second[0])**2 +
+          (first[1] - second[1])**2 + (first[2] - second[2])**2) 
+        iters += 1
+  return distance/iters
+
+
+
+
+def rawDistanceHelp(img1, img2):
+  
+  initWidth, initHeight = img1.size
+  
+  img1 = img1.resize((8, 8), Image.BILINEAR)
   width, height = img1.size
   img2 = img2.resize((width, height), Image.BILINEAR)
   i1 = img1.load()
@@ -625,18 +658,18 @@ def threeDPearson():
 
 
 def oneDPearson():
-  thumbnails = os.listdir('/home/ryan/Dropbox/thumbnails')
+  thumbnails = os.listdir('/home/ryan/Dropbox/fulls')
   for t in thumbnails:
     if not t[0] == ".":
-      target = Image.open('/home/ryan/Dropbox/thumbnails/'+ t)
-      filesInDir = os.listdir('/home/ryan/Dropbox/thumbnail_library/')
+      target = Image.open('/home/ryan/Dropbox/fulls/'+ t)
+      filesInDir = os.listdir('/home/ryan/Dropbox/library/')
       best = -2
       bestFile = ""
       secondBest = -2
       secondBestFile = ""
       for fileInDir in filesInDir:
         if fileInDir[0] != ".":
-          thisDist = tiledOneDPearsonHelp(memestat.algo2.compareWithTCH(memestat.algo2.centerCut(target), 2), memestat.algo2.compareWithTCH(memestat.algo2.centerCut(Image.open('/home/ryan/Dropbox/thumbnail_library/' + fileInDir)), 2))
+          thisDist = oneDPearsonHelp(andy.centerCut(target), andy.centerCut(Image.open('/home/ryan/Dropbox/library/' + fileInDir)))
           if thisDist > best:
             secondBest = best
             secondBestFile = bestFile
@@ -649,6 +682,30 @@ def oneDPearson():
       print "Second Best Match For " + t + ": " + secondBestFile + ", with score: " + str(secondBest)
       print ""
 
+def oneDPearsonResize():
+  thumbnails = os.listdir('/home/ryan/Dropbox/fulls')
+  for t in thumbnails:
+    if not t[0] == ".":
+      target = andy.centerCut(Image.open('/home/ryan/Dropbox/fulls/'+ t))
+      filesInDir = os.listdir('/home/ryan/Dropbox/library/')
+      best = -2
+      bestFile = ""
+      secondBest = -2
+      secondBestFile = ""
+      for fileInDir in filesInDir:
+        if fileInDir[0] != ".":
+          thisDist = oneDPearsonHelp(andy.centerCut(target).resize((8, 8)),  andy.centerCut(Image.open('/home/ryan/Dropbox/library/' + fileInDir)).resize((8, 8)))
+          if thisDist > best:
+            secondBest = best
+            secondBestFile = bestFile
+            best = thisDist
+            bestFile = fileInDir
+          elif thisDist > secondBest:
+            secondBest = thisDist
+            secondBestFile = fileInDir
+      print "Best Match For " + t + ": " + bestFile + ", with score: " + str(best)
+      print "Second Best Match For " + t + ": " + secondBestFile + ", with score: " + str(secondBest)
+      print ""
 def oneDPearsonVertical():
   thumbnails = os.listdir('/home/ryan/Dropbox/thumbnails')
   for t in thumbnails:
@@ -731,10 +788,10 @@ def foundCode():
 
 
 def rawDistance():
-  thumbnails = os.listdir('/home/ryan/Dropbox/thumbnails')
+  thumbnails = os.listdir('/home/ryan/Dropbox/fulls')
   for t in thumbnails:
     if not t[0] == ".":
-      target = Image.open('/home/ryan/Dropbox/thumbnails/'+ t)
+      target = Image.open('/home/ryan/Dropbox/fulls/'+ t)
       filesInDir = os.listdir('/home/ryan/Dropbox/library/')
       best = sys.maxint
       bestFile = ""
@@ -754,6 +811,32 @@ def rawDistance():
       print "Best Match For " + t + ": " + bestFile + ", with score: " + str(best)
       print "Second Best Match For " + t + ": " + secondBestFile + ", with score: " + str(secondBest)
       print ""
+
+def rawDistanceCenterCut():
+  thumbnails = os.listdir('/home/ryan/Dropbox/fulls')
+  for t in thumbnails:
+    if not t[0] == ".":
+      target = Image.open('/home/ryan/Dropbox/fulls/'+ t)
+      filesInDir = os.listdir('/home/ryan/Dropbox/library/')
+      best = sys.maxint
+      bestFile = ""
+      secondBest = sys.maxint
+      secondBestFile = ""
+      for fileInDir in filesInDir:
+        if not fileInDir[0] == ".":
+          thisDist = rawDistanceHelpCenterCut(target, Image.open('/home/ryan/Dropbox/library/' + fileInDir))
+          if thisDist < best:
+            secondBest = best
+            secondBestFile = bestFile
+            best = thisDist
+            bestFile = fileInDir
+          elif thisDist < secondBest:
+            secondBest = thisDist
+            secondBestFile = fileInDir
+      print "Best Match For " + t + ": " + bestFile + ", with score: " + str(best)
+      print "Second Best Match For " + t + ": " + secondBestFile + ", with score: " + str(secondBest)
+      print ""
+
 
 def preComp():
   """
@@ -818,14 +901,14 @@ def preComp():
   filesInDir = os.listdir('/home/ryan/Dropbox/library/')
   hists = {}
   for fileInDir in filesInDir:
-    if fileInDir[0] != ".": hists[fileInDir] = andy.compareWithTCH(Image.open('/home/ryan/Dropbox/library/' + fileInDir), 5, 3)
+    if fileInDir[0] != ".": hists[fileInDir] = andy.compareWithTCH(Image.open('/home/ryan/Dropbox/library/' + fileInDir).resize((8, 8)) , 2, 2)
   f = open("histsl53", "w") 
   z = cPickle.dumps(hists)
   f.write(z)
   f.close()
   hists = {}
   for fileInDir in filesInDir:
-    if fileInDir[0] != ".": hists[fileInDir] = andy.compareWithTCH(Image.open('/home/ryan/Dropbox/library/' + fileInDir), 5, 7)
+    if fileInDir[0] != ".": hists[fileInDir] = andy.compareWithTCH(Image.open('/home/ryan/Dropbox/library/' + fileInDir).resize((4, 4)), 1, 2)
   f = open("histsl57", "w") 
   z = cPickle.dumps(hists)
   f.write(z)
@@ -835,7 +918,7 @@ def preComp():
   print "done"
   
   for fileInDir in filesInDir:
-    if fileInDir[0] != ".": hists[fileInDir] = andy.compareWithTCH(Image.open('/home/ryan/Dropbox/library/' + fileInDir), 5, 11)
+    if fileInDir[0] != ".": hists[fileInDir] = andy.compareWithTCH(Image.open('/home/ryan/Dropbox/library/' + fileInDir).resize((4, 4)), 2, 2)
   f = open("histsl511", "w")     
   z = cPickle.dumps(hists)
   f.write(z)
@@ -843,7 +926,7 @@ def preComp():
   hists = {}  
   print "done"
   for fileInDir in filesInDir:
-    if fileInDir[0] != ".": hists[fileInDir] = andy.compareWithTCH(Image.open('/home/ryan/Dropbox/library/' + fileInDir), 5, 15)
+    if fileInDir[0] != ".": hists[fileInDir] = andy.compareWithTCH(Image.open('/home/ryan/Dropbox/library/' + fileInDir).resize((2, 2)), 1, 2)
   f = open("histsl515", "w")
   z = cPickle.dumps(hists)
   f.write(z)
@@ -851,7 +934,7 @@ def preComp():
   hists = {}  
   print "done" 
   for fileInDir in filesInDir:
-    if fileInDir[0] != ".": hists[fileInDir] = andy.compareWithTCH(Image.open('/home/ryan/Dropbox/library/' + fileInDir), 5, 25)
+    if fileInDir[0] != ".": hists[fileInDir] = andy.compareWithTCH(Image.open('/home/ryan/Dropbox/library/' + fileInDir).resize((6, 6)), 1, 2)
   f = open("histsl525", "w")
   z = cPickle.dumps(hists)
   f.write(z)
@@ -859,7 +942,7 @@ def preComp():
   hists = {}    
   print "done"
   for fileInDir in filesInDir:
-    if fileInDir[0] != ".": hists[fileInDir] = andy.compareWithTCH(Image.open('/home/ryan/Dropbox/library/' + fileInDir), 5, 38)
+    if fileInDir[0] != ".": hists[fileInDir] = andy.compareWithTCH(Image.open('/home/ryan/Dropbox/library/' + fileInDir).resize((8, 8)), 5, 38)
   f = open("histsl538", "w")
   z = cPickle.dumps(hists)
   f.write(z)
@@ -867,7 +950,7 @@ def preComp():
   hists = {}  
   print "done"
   for fileInDir in filesInDir:
-    if fileInDir[0] != ".": hists[fileInDir] = andy.compareWithTCH(Image.open('/home/ryan/Dropbox/library/' + fileInDir), 5, 50)
+    if fileInDir[0] != ".": hists[fileInDir] = andy.compareWithTCH(Image.open('/home/ryan/Dropbox/library/' + fileInDir).resize((8, 8)), 5, 50)
   f = open("histsl550", "w")
   z = cPickle.dumps(hists)
   f.write(z)
@@ -880,23 +963,23 @@ def preComp():
 
 
 def tch():
-  thumbnails = os.listdir('/home/ryan/Dropbox/thumbnails')
-  f = open("histsl515", "r")
+  thumbnails = os.listdir('/home/ryan/Dropbox/fulls')
+  f = open("histsl57", "r")
   hists = f.read()
   f.close()
   hists = cPickle.loads(hists)
   for t in thumbnails:
     if not t[0] == ".":
-      target = Image.open('/home/ryan/Dropbox/thumbnails/'+ t)
+      target = Image.open('/home/ryan/Dropbox/fulls/'+ t)
       filesInDir = os.listdir('/home/ryan/Dropbox/library/')
       best = sys.maxint
       bestFile = ""
       secondBest = sys.maxint
       secondBestFile = ""
-      targHist = andy.compareWithTCH(target,5,15)
+      targHist = andy.compareWithTCH(target,1,2)
       for fileInDir in filesInDir:
         if not fileInDir[0] == ".":
-          thisDist = tchHelp2(targHist, hists[fileInDir], 5, 15)
+          thisDist = tchHelp2(targHist, hists[fileInDir], 1, 2)
           if thisDist < best:
             secondBest = best
             secondBestFile = bestFile
@@ -909,7 +992,6 @@ def tch():
       print "Second Best Match For " + t + ": " + secondBestFile + ", with score: " + str(secondBest)
       print ""
 
-tch()
 def rawDistanceSorted():
   thumbnails = os.listdir('/home/ryan/Dropbox/thumbnails')
   for t in thumbnails:
@@ -1078,7 +1160,7 @@ def topN(target, n):
 #oneDPearson()
 #print oneDPearsonHelp(Image.open('/home/ryan/Dropbox/thumbnails/firstworld.jpg'), Image.open('/home/ryan/Dropbox/thumbnail_library/1stWorldCanadianProblems'))
 #rawDistanceSorted()
-
+rawDistanceCenterCut()
 def harrisDist():
   thumbnails = os.listdir('/home/ryan/Dropbox/thumbnails')
   for t in thumbnails:
