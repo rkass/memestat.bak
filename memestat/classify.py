@@ -9,7 +9,7 @@ dropBoxDir = str.strip(open('../dropBoxDir', 'r').read()) + 'library/'
 
 def oneDPearsonHelp(img1, img2):
   initWidth, initHeight = img1.size
-  img1 = img1.resize((initWidth * 20/initWidth, initHeight * 20/initWidth), Image.BILINEAR)
+  img1 = img1.resize((16, 16), Image.BILINEAR)
   width, height = img1.size
   img2 = img2.resize((width, height), Image.BILINEAR)
   i1 = img1.load()
@@ -48,7 +48,7 @@ def oneDPearsonHelp(img1, img2):
 
 def rawDistanceHelp(img1, img2):
   initWidth, initHeight = img1.size
-  img1 = img1.resize((initWidth * 16/initWidth, initHeight * 16/initWidth), Image.BILINEAR)
+  img1 = img1.resize((8, 8), Image.BILINEAR)
   width, height = img1.size
   img2 = img2.resize((width, height), Image.BILINEAR)
   i1 = img1.load()
@@ -105,19 +105,43 @@ def distanceTopTwo(target, directory):
         secondBestFile = libImage
   return (bestFile, secondBestFile)
 
+def distanceTop(target, directory):
+  best = sys.maxint
+  bestFile = ""
+  for libImage in os.listdir(directory):
+    if libImage[0] != ".":
+      thisDist = rawDistanceHelp(target, algo2.centerCut(Image.open(directory + libImage)))
+      if thisDist < best:
+        best = thisDist
+        bestFile = libImage
+  return (bestFile, best)
 
-def classify(target):
+def correlationTop(target, directory):
+  best = -1
+  bestFile = ""
+  for libImage in os.listdir(directory):
+    if libImage[0] != ".":
+      thisCorrelation = oneDPearsonHelp(target, algo2.centerCut(Image.open(directory + libImage)))
+      if thisCorrelation > best:
+        best = thisCorrelation
+        bestFile = libImage
+  return (bestFile, best)
+
+def classify(target, directory = dropBoxDir):
   target = Image.open(target)
-  target_crop = algo2.centerCut(target);
-  xtiles=7;
-  target_crop_split = algo2.compareWithTCH(target_corp, xtiles);
-
-  topTwoCorr = correlationTopTwo(target, dropBoxDir)
-  topTwoDist = distanceTopTwo(target, dropBoxDir)
-  if topTwoDist[0] in topTwoCorr:
-    return ('library/'+topTwoDist[0], topTwoDist, topTwoCorr)
-  elif topTwoDist[1] in topTwoCorr:
-    return ('library/'+topTwoDist[1], topTwoDist, topTwoCorr)
+  try:
+    target_crop = algo2.centerCut(target)
+  except:
+    return (None, False, None, None)
+  topFileByDist, topDistVal = distanceTop(target_crop, directory)
+  if topDistVal < 20:
+    #Strong Classification
+    return ('library/' + topFileByDist, True, topDistVal, None)  
+  elif topDistVal < 40: 
+    #Weak Classification
+    return ('library/' + topFileByDist, False, topDistVal, None)
   else:
-    return(None, topTwoDist, topTwoCorr)
-
+    topFileByCorr, topCorrVal = correlationTop(target_crop, directory)
+    parent = 'library/' + topFileByDist
+    if parent != topFileByCorr: parent = None
+    return (parent, False, topDistVal, topCorrVal)

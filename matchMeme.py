@@ -837,7 +837,7 @@ def rawDistanceCenterCut():
       print "Second Best Match For " + t + ": " + secondBestFile + ", with score: " + str(secondBest)
       print ""
 
-
+rawDistanceCenterCut()
 def preComp():
   """
   filesInDir = os.listdir('/home/ryan/Dropbox/thumbnail_library/')
@@ -901,7 +901,8 @@ def preComp():
   filesInDir = os.listdir('/home/ryan/Dropbox/library/')
   hists = {}
   for fileInDir in filesInDir:
-    if fileInDir[0] != ".": hists[fileInDir] = andy.compareWithTCH(Image.open('/home/ryan/Dropbox/library/' + fileInDir).resize((8, 8)) , 2, 2)
+    if fileInDir[0] != ".": 
+      hists[fileInDir] = andy.compareWithTCH(Image.open('/home/ryan/Dropbox/library/' + fileInDir), 2, 5)
   f = open("histsl53", "w") 
   z = cPickle.dumps(hists)
   f.write(z)
@@ -957,14 +958,14 @@ def preComp():
   f.close()
   print "done"
 
-
+ 
 
   
 
 
 def tch():
   thumbnails = os.listdir('/home/ryan/Dropbox/fulls')
-  f = open("histsl57", "r")
+  f = open("histsl53", "r")
   hists = f.read()
   f.close()
   hists = cPickle.loads(hists)
@@ -976,10 +977,10 @@ def tch():
       bestFile = ""
       secondBest = sys.maxint
       secondBestFile = ""
-      targHist = andy.compareWithTCH(target,1,2)
+      targHist = andy.compareWithTCH(target,2,5)
       for fileInDir in filesInDir:
         if not fileInDir[0] == ".":
-          thisDist = tchHelp2(targHist, hists[fileInDir], 1, 2)
+          thisDist = tchHelp2(targHist, hists[fileInDir], 2, 5)
           if thisDist < best:
             secondBest = best
             secondBestFile = bestFile
@@ -991,7 +992,6 @@ def tch():
       print "Best Match For " + t + ": " + bestFile + ", with score: " + str(best)
       print "Second Best Match For " + t + ": " + secondBestFile + ", with score: " + str(secondBest)
       print ""
-
 def rawDistanceSorted():
   thumbnails = os.listdir('/home/ryan/Dropbox/thumbnails')
   for t in thumbnails:
@@ -1160,7 +1160,6 @@ def topN(target, n):
 #oneDPearson()
 #print oneDPearsonHelp(Image.open('/home/ryan/Dropbox/thumbnails/firstworld.jpg'), Image.open('/home/ryan/Dropbox/thumbnail_library/1stWorldCanadianProblems'))
 #rawDistanceSorted()
-rawDistanceCenterCut()
 def harrisDist():
   thumbnails = os.listdir('/home/ryan/Dropbox/thumbnails')
   for t in thumbnails:
