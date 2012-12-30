@@ -2,12 +2,12 @@ from django.conf.urls.defaults import patterns, include, url
 from memestat.views import hello
 
 # Uncomment the next two lines to enable the admin:
-# from django.contrib import admin
-# admin.autodiscover()
+from django.contrib import admin
+admin.autodiscover()
 
 urlpatterns = patterns('', ('^hello/$', hello), ('^$', hello),
     # Examples:
-    # url(r'^$', 'memestat.views.home', name='home'),
+     url(r'^$', 'memestat.views.home', name='hello'),
     # url(r'^memestat/', include('memestat.foo.urls')),
 
     # Uncomment the admin/doc line below to enable admin documentation:

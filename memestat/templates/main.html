@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+
+
+  <style>
+    body {background-image:url('{{MEDIA_URL}}{{background}}');}
+     .centeredImage
+      {
+      text-align:center;
+      display:block;
+      }
+
+    .img_margin
+    {
+    margin-left: 20px;
+    margin-right: 20px;
+    width:500px
+    }
+
+    .center_div
+    {
+    border:1px solid gray;
+    margin-left:auto;
+    margin-right:auto;
+    width:600px;
+    background-color:white;
+    text-align:center;
+    padding:8px;
+    }
+
+
+  </style>
+
+
+</head>
+
+
+
+
+<body>
+
+  <div class = "center_div">
+
+  <h1 style="text-align:right; color:lightblue; font-family:helvetica;">
+  memeSTAT
+  </h1>
+
+  
+
+  <h2 style="text-align: center; color: black; font-family:helvetica;"> 
+  <u>Today's Top Meme </u>
+  </h2>
+
+  <h3 style = "text-align: center; color: darkgreen; font-family:     helvetica;">
+  {{top_meme_text}}</h3>
+
+
+  <a href="{{MEDIA_URL}} {{top_meme_url}}">
+  <img src="{{MEDIA_URL}} {{top_meme_image}}" class="img_margin"></a>
+
+  <br><br>
+
+
+
+
+  <h2 style="text-align: center; color: black; font-family:helvetica;">
+  <u>Hottest Meme </u>
+  </h2>
+
+  <h3 style = "text-align: center; color: darkgreen; font-family:     helvetica;">
+  {{hot_meme_text}} </h3>
+
+
+  <a href="{{MEDIA_URL}} {{hot_meme_url}}">
+  <img src="{{MEDIA_URL}} {{hot_meme_image}}" class="img_margin"></a>
+
+  <br><br>
+
+
+
+
+</div>
+
+</body>
+
+
+
+</html>
