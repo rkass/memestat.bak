@@ -4,7 +4,7 @@ import os
 import sys
 import numpy
 
-
+#for centercut
 
  #cuts image into (width, hight*.4) at centerpoint
 def centerCut(im):

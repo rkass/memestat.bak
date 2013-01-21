@@ -9,7 +9,7 @@ ADMINS = (
 )
 
 MANAGERS = ADMINS
-"""before heroku:
+
 DATABASES = {
     'default': {
         'ENGINE': 'django_mongodb_engine', # Add 'postgresql_psycopg2', 'postgresql', 'mysql', 'sqlite3' or 'oracle'.
@@ -20,12 +20,13 @@ DATABASES = {
         'HOST': 'ds045147.mongolab.com',                      # Set to empty string for localhost. Not used with sqlite3.
         'PORT': 45147,                      # Set to empty string for default. Not used with sqlite3.
     }
-}"""
+}
+"""
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.postgresql_psycopg2',
     }
-}
+}"""
 # Local time zone for this installation. Choices can be found here:
 # http://en.wikipedia.org/wiki/List_of_tz_zones_by_name
 # although not all choices may be available on all operating systems.
@@ -149,3 +150,6 @@ LOGGING = {
         },
     }
 }
+
+import dj_database_url
+DATABASES['default'] = dj_database_url.config()
