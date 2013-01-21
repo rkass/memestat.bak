@@ -5,3 +5,5 @@
 
 dropBoxDir
 dbPassword
+venv
+*.pyc
